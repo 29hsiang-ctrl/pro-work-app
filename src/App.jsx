@@ -158,7 +158,8 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     );
 
     return (
-        <div className="max-w-6xl mx-auto p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans animate-in fade-in duration-300">
+        // --- [修正重點1] 最外層容器：改用 w-full 並在手機版縮小 padding ---
+        <div className="w-full md:max-w-6xl mx-auto p-2 md:p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans animate-in fade-in duration-300">
             <div className="flex justify-between items-center mb-6 border-b pb-4">
                 <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-1 outline-none shadow-sm" />
                 <div className="flex gap-4 items-center">
@@ -167,7 +168,8 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                     <button onClick={exportExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-green-700 transition-all shadow-md">生成 Excel</button>
                 </div>
             </div>
-            <div className="border-2 border-black rounded overflow-hidden mb-6 shadow-sm">
+            {/* --- [修正重點2] 表格容器：改用 overflow-x-auto 讓表格在手機上可以橫向捲動 --- */}
+            <div className="border-2 border-black rounded overflow-x-auto mb-6 shadow-sm">
                 <table className="w-full text-center border-collapse text-sm">
                     <thead className="bg-gray-100 border-b-2 border-black font-bold divide-x-2 divide-black text-gray-700">
                         <tr>
@@ -191,7 +193,8 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                     </tbody>
                 </table>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-3xl border shadow-inner">
+            {/* --- [修正重點3] 輸入區塊容器：在手機版縮小 padding 和 gap --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 bg-gray-50 p-4 md:p-6 rounded-3xl border shadow-inner">
                 <div className="flex flex-col items-center justify-center space-y-6 lg:border-r lg:pr-6">
                     <div className="grid grid-cols-3 gap-3">
                         {['北', '西', '東', '南'].map((d) => (
@@ -247,7 +250,6 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     );
 };
 
-// --- [修正重點] 移除產生 PDF 時可能導致多一頁的外部樣式 (mx-auto, shadow-sm) ---
 const PreviewPage = ({ pageItems, pageIndex, totalPages, reportTitle }) => (
     <div className="page-container origin-top font-kai bg-white p-[15mm] overflow-hidden" style={{ width: '210mm', height: '297mm', margin: 0 }}>
         <div className="absolute top-6 right-8 text-sm font-kai text-gray-600">第 {pageIndex + 1} / {totalPages} 頁</div>
@@ -321,7 +323,8 @@ export default function App() {
     if (chunkedEntries.length === 0) chunkedEntries.push([]);
 
     return (
-        <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans text-gray-800">
+        // --- [修正重點4] 主頁面容器：在手機版縮小 padding ---
+        <div className="min-h-screen bg-gray-100 p-2 md:p-8 font-sans text-gray-800">
             <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-bold flex items-center gap-2">🏗️ PRO事一堆</h1>
@@ -349,8 +352,6 @@ export default function App() {
                         <EntryEditor key={entry.id} entry={entry} index={idx} total={entries.length} onMove={(i,d)=>{const n=[...entries]; const t=d==='up'?i-1:i+1; [n[i],n[t]]=[n[t],n[i]]; setEntries(n);}} onRemove={id=>setEntries(entries.filter(e=>e.id!==id))} onChange={(id,f,v)=>setEntries(entries.map(e=>e.id===id?{...e,[f]:v}:e))} onImageUpload={handleImageUpload} onRemoveImage={(id,idx)=>setEntries(entries.map(e=>e.id===id?{...e,images:e.images.filter((_,i)=>i!==idx)}:e))} />
                     ))}
                     <button onClick={() => setEntries([...entries, {id: Date.now(), date: getROCDate(), floor:'', direction:'', item:'', content:'', images:[] }])} className="w-full py-5 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-bold bg-white hover:bg-gray-50 transition-all">+ 新增照片項目</button>
-                    
-                    {/* --- [修正重點] 確保隱藏容器無邊距，解決多一頁問題 --- */}
                     <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
                         <div ref={reportRef} style={{ margin: 0, padding: 0 }}>
                             {chunkedEntries.map((items, i) => <PreviewPage key={i} pageItems={items} pageIndex={i} totalPages={chunkedEntries.length} reportTitle={reportTitle} />)}
