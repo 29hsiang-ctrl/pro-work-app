@@ -158,17 +158,18 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     );
 
     return (
-        // --- [修正重點1] 最外層容器：改用 w-full 並在手機版縮小 padding ---
         <div className="w-full md:max-w-6xl mx-auto p-2 md:p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans animate-in fade-in duration-300">
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
-                <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-1 outline-none shadow-sm" />
-                <div className="flex gap-4 items-center">
-                    <button onClick={clearTable} className="text-sm text-red-500 font-bold border border-red-500 px-3 py-1 rounded hover:bg-red-50 transition-colors">重置表格</button>
-                    <button onClick={generatePDF} disabled={isGenerating} className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-black transition-all shadow-md">{isGenerating ? '生成中...' : '生成 PDF'}</button>
-                    <button onClick={exportExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-green-700 transition-all shadow-md">生成 Excel</button>
-                </div>
+            {/* --- [修改重點] 標題輸入框獨立一行，並佔滿寬度 --- */}
+            <div className="mb-4">
+                <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="w-full text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-2 outline-none shadow-sm" />
             </div>
-            {/* --- [修正重點2] 表格容器：改用 overflow-x-auto 讓表格在手機上可以橫向捲動 --- */}
+            {/* --- [修改重點] 按鈕群組移到標題下方，靠右對齊，手機版自動換行 --- */}
+            <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-end mb-6 border-b pb-4">
+                <button onClick={clearTable} className="text-sm text-red-500 font-bold border border-red-500 px-3 py-1.5 rounded hover:bg-red-50 transition-colors flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">重置表格</button>
+                <button onClick={generatePDF} disabled={isGenerating} className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-black transition-all shadow-md flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">{isGenerating ? '生成中...' : '生成 PDF'}</button>
+                <button onClick={exportExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-green-700 transition-all shadow-md flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">生成 Excel</button>
+            </div>
+
             <div className="border-2 border-black rounded overflow-x-auto mb-6 shadow-sm">
                 <table className="w-full text-center border-collapse text-sm">
                     <thead className="bg-gray-100 border-b-2 border-black font-bold divide-x-2 divide-black text-gray-700">
@@ -193,7 +194,6 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                     </tbody>
                 </table>
             </div>
-            {/* --- [修正重點3] 輸入區塊容器：在手機版縮小 padding 和 gap --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 bg-gray-50 p-4 md:p-6 rounded-3xl border shadow-inner">
                 <div className="flex flex-col items-center justify-center space-y-6 lg:border-r lg:pr-6">
                     <div className="grid grid-cols-3 gap-3">
@@ -323,7 +323,6 @@ export default function App() {
     if (chunkedEntries.length === 0) chunkedEntries.push([]);
 
     return (
-        // --- [修正重點4] 主頁面容器：在手機版縮小 padding ---
         <div className="min-h-screen bg-gray-100 p-2 md:p-8 font-sans text-gray-800">
             <div className="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex flex-col gap-2">
