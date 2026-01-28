@@ -107,12 +107,13 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     const widthInputRef = useRef();
     const pdfRef = useRef();
 
+    // --- [修改重點] 依照新要求更新計算邏輯 ---
     const calcFinal = (base, mode) => {
         const val = parseFloat(base) || 0;
         const thick = parseFloat(form.thickness) || 0;
-        if (mode === '兩側磁磚') return val + (thick * 2);
-        if (mode === '單邊磁磚') return val + thick;
-        return val;
+        if (mode === '兩側粉刷') return val + (thick * 2); // 量測數值 + 磁磚厚度x2
+        if (mode === '單邊磁磚') return val + thick;      // 量測數值 + 磁磚厚度x1
+        return val; // 兩側磁磚：量測數值 (不加厚度)
     };
 
     const addRow = () => {
@@ -159,11 +160,9 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
 
     return (
         <div className="w-full md:max-w-6xl mx-auto p-2 md:p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans animate-in fade-in duration-300">
-            {/* --- [修改重點] 標題輸入框獨立一行，並佔滿寬度 --- */}
             <div className="mb-4">
                 <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="w-full text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-2 outline-none shadow-sm" />
             </div>
-            {/* --- [修改重點] 按鈕群組移到標題下方，靠右對齊，手機版自動換行 --- */}
             <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-end mb-6 border-b pb-4">
                 <button onClick={clearTable} className="text-sm text-red-500 font-bold border border-red-500 px-3 py-1.5 rounded hover:bg-red-50 transition-colors flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">重置表格</button>
                 <button onClick={generatePDF} disabled={isGenerating} className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-black transition-all shadow-md flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">{isGenerating ? '生成中...' : '生成 PDF'}</button>
