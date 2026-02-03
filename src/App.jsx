@@ -30,8 +30,9 @@ const getROCDate = () => {
     return `${date.getFullYear() - 1911}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 };
 
+// --- [優化] 加入 onerror 處理 ---
 const compressImage = (file, maxWidth = 1280, quality = 0.7) => { 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const objectUrl = URL.createObjectURL(file);
         const img = new Image();
         img.onload = () => {
@@ -42,6 +43,10 @@ const compressImage = (file, maxWidth = 1280, quality = 0.7) => {
             canvas.width = width; canvas.height = height;
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
             resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = (e) => {
+            URL.revokeObjectURL(objectUrl);
+            reject(e);
         };
         img.src = objectUrl;
     });
@@ -54,8 +59,8 @@ const EntryEditor = ({ entry, index, total, onMove, onRemove, onChange, onImageU
         </button>
     );
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4">
-            <div className="flex justify-between items-start mb-4 font-sans">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-4 font-sans">
+            <div className="flex justify-between items-start mb-4">
                 <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">#{index + 1}</span>
                 <div className="flex gap-1">
                     <button onClick={() => onMove(index, 'up')} disabled={index === 0} className="p-1.5 text-gray-400 hover:text-blue-600 disabled:opacity-30 rounded"><Icons.MoveUp /></button>
@@ -107,13 +112,13 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     const widthInputRef = useRef();
     const pdfRef = useRef();
 
-    // --- [修改重點] 依照新要求更新計算邏輯 ---
+    // --- [保留邏輯] 粉刷+2, 磁磚+0, 單邊+1 ---
     const calcFinal = (base, mode) => {
         const val = parseFloat(base) || 0;
         const thick = parseFloat(form.thickness) || 0;
-        if (mode === '兩側粉刷') return val + (thick * 2); // 量測數值 + 磁磚厚度x2
-        if (mode === '單邊磁磚') return val + thick;      // 量測數值 + 磁磚厚度x1
-        return val; // 兩側磁磚：量測數值 (不加厚度)
+        if (mode === '兩側粉刷') return val + (thick * 2);
+        if (mode === '單邊磁磚') return val + thick;
+        return val; // 兩側磁磚
     };
 
     const addRow = () => {
@@ -163,6 +168,7 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
             <div className="mb-4">
                 <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="w-full text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-2 outline-none shadow-sm" />
             </div>
+            {/* --- [保留] 搬家後的按鈕位置 --- */}
             <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-end mb-6 border-b pb-4">
                 <button onClick={clearTable} className="text-sm text-red-500 font-bold border border-red-500 px-3 py-1.5 rounded hover:bg-red-50 transition-colors flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">重置表格</button>
                 <button onClick={generatePDF} disabled={isGenerating} className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-black transition-all shadow-md flex-grow md:flex-grow-0 text-center select-none whitespace-nowrap">{isGenerating ? '生成中...' : '生成 PDF'}</button>
@@ -189,7 +195,6 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                                 <td><button onClick={()=>setTableData(tableData.filter(x=>x.id!==r.id))} className="text-red-500 font-bold hover:scale-125 px-1">×</button></td>
                             </tr>
                         ))}
-                        {tableData.length === 0 && <tr><td colSpan={isFull ? 9 : 7} className="py-8 text-gray-400 italic">尚未輸入「{dimTitle}」數據...汪！</td></tr>}
                     </tbody>
                 </table>
             </div>
@@ -220,6 +225,7 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                     <button onClick={addRow} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-2xl hover:bg-blue-700 shadow-xl active:scale-95 transition-all">登入下一筆</button>
                 </div>
             </div>
+            {/* PDF 隱藏區域 (省略內容與上版本同) */}
             <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
                 <div ref={pdfRef} style={{ padding: '20mm', backgroundColor: 'white', color: 'black', width: isFull ? '277mm' : '210mm', minHeight: '297mm' }}>
                     <h1 style={{ textAlign: 'center', fontSize: '26pt', marginBottom: '30px', fontWeight: 'bold' }}>{dimTitle}表 (單位: mm)</h1>
@@ -249,6 +255,7 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     );
 };
 
+// --- [保留] PDF 報表組件 (已修正空白頁問題) ---
 const PreviewPage = ({ pageItems, pageIndex, totalPages, reportTitle }) => (
     <div className="page-container origin-top font-kai bg-white p-[15mm] overflow-hidden" style={{ width: '210mm', height: '297mm', margin: 0 }}>
         <div className="absolute top-6 right-8 text-sm font-kai text-gray-600">第 {pageIndex + 1} / {totalPages} 頁</div>
@@ -287,26 +294,44 @@ export default function App() {
     const [isProcessing, setIsProcessing] = useState(false);
     const reportRef = useRef(null);
 
-    useEffect(() => {
-        document.title = "PRO-WORK";
-    }, []);
-
+    useEffect(() => { document.title = "PRO-WORK"; }, []);
     useEffect(() => {
         localStorage.setItem('site_report_data', JSON.stringify(entries));
         localStorage.setItem('site_report_title', reportTitle);
     }, [entries, reportTitle]);
 
+    // --- [修正重點] 增加 try/finally 確保 Loader 一定會關閉 ---
     const handleImageUpload = async (id, e) => {
-        const files = Array.from(e.target.files); if (!files.length) return;
+        const files = Array.from(e.target.files); 
+        if (!files.length) return;
+        
         setIsProcessing(true);
-        const processed = [];
-        for(let file of files.slice(0, 2)) {
-            const preview = await compressImage(file);
-            processed.push({ preview });
+        try {
+            const currentEntry = entries.find(ent => ent.id === id);
+            const currentImagesCount = currentEntry?.images?.length || 0;
+            const remainingSlots = 2 - currentImagesCount;
+            
+            if (remainingSlots <= 0) return;
+
+            const processed = [];
+            // 只處理剩餘位子數量的照片
+            for(let file of files.slice(0, remainingSlots)) {
+                try {
+                    const preview = await compressImage(file);
+                    processed.push({ preview });
+                } catch (err) {
+                    console.error("圖片處理失敗:", err);
+                }
+            }
+            
+            if (processed.length > 0) {
+                setEntries(prev => prev.map(ent => ent.id === id ? { ...ent, images: [...ent.images, ...processed].slice(0, 2) } : ent));
+            }
+        } finally {
+            // 無論成功與否，一定要關閉遮罩
+            setIsProcessing(false);
+            e.target.value = '';
         }
-        setEntries(prev => prev.map(ent => ent.id === id ? { ...ent, images: [...ent.images, ...processed].slice(0,2) } : ent));
-        setIsProcessing(false);
-        e.target.value = '';
     };
 
     const generatePDF = () => {
