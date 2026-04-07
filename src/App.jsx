@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import html2pdf from 'html2pdf.js';
 
-// --- [保留] 原本的所有圖示 ---
+// --- [保留] 所有圖示 ---
 const Icons = {
     Plus: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
     Trash2: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>,
@@ -30,7 +30,7 @@ const getROCDate = () => {
     return `${date.getFullYear() - 1911}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 };
 
-// --- [優化] 更強力的圖片壓縮 (800px, 0.5 quality) ---
+// --- [優化] 強力壓縮 (解決白畫面問題) ---
 const compressImage = (file, maxWidth = 800, quality = 0.5) => { 
     return new Promise((resolve, reject) => {
         const objectUrl = URL.createObjectURL(file);
@@ -44,14 +44,14 @@ const compressImage = (file, maxWidth = 800, quality = 0.5) => {
             canvas.getContext('2d').drawImage(img, 0, 0, width, height);
             resolve(canvas.toDataURL('image/jpeg', quality));
         };
-        img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("圖片載入失敗")); };
+        img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("圖片處理失敗")); };
         img.src = objectUrl;
     });
 };
 
 const EntryEditor = ({ entry, index, total, onMove, onRemove, onChange, onImageUpload, onRemoveImage }) => {
     const DirectionBtn = ({ dir, label }) => (
-        <button onClick={() => onChange(entry.id, 'direction', dir)} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all ${entry.direction === dir ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+        <button onClick={() => onChange(entry.id, 'direction', dir)} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border transition-all ${entry.direction === dir ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'}`}>
             {label}
         </button>
     );
@@ -86,7 +86,7 @@ const EntryEditor = ({ entry, index, total, onMove, onRemove, onChange, onImageU
                 <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1"><label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Icons.Calendar /> 日期</label><input type="text" value={entry.date} onChange={(e) => onChange(entry.id, 'date', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm outline-none shadow-sm" /></div>
-                        <div className="space-y-1"><label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Icons.Layers /> 樓層</label><select value={entry.floor} onChange={(e) => onChange(entry.id, 'floor', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-white shadow-sm font-sans font-bold"><option value="">選擇樓層...</option>{FLOOR_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+                        <div className="space-y-1"><label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Icons.Layers /> 樓層</label><select value={entry.floor} onChange={(e) => onChange(entry.id, 'floor', e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm bg-white shadow-sm font-sans font-bold font-sans font-bold"><option value="">選擇樓層...</option>{FLOOR_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
                     </div>
                     <div><label className="text-xs font-bold text-gray-500 mb-1">方位</label><div className="grid grid-cols-3 gap-1 w-fit border p-2 rounded-lg bg-gray-50 shadow-inner"><div className="col-start-2"><DirectionBtn dir="北" label="北" /></div><div className="col-start-1"><DirectionBtn dir="西" label="西" /></div><div className="col-start-2 flex justify-center items-center"><div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div></div><div className="col-start-3"><DirectionBtn dir="東" label="東" /></div><div className="col-start-2"><DirectionBtn dir="南" label="南" /></div></div></div>
                     <div><div className="flex justify-between items-center mb-1"><label className="text-xs font-bold text-gray-500 flex items-center gap-1"><Icons.CheckSquare /> 項目</label><select className="text-xs border rounded p-1 bg-gray-50" onChange={(e) => {if(e.target.value) onChange(entry.id, 'item', e.target.value); e.target.value='';}}><option value="">快速選擇...</option>{ITEM_QUICK_SELECT.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select></div><textarea value={entry.item} onChange={(e) => onChange(entry.id, 'item', e.target.value)} rows={2} className="w-full px-3 py-2 border rounded-lg text-sm outline-none resize-none shadow-sm font-bold" /></div>
@@ -97,7 +97,6 @@ const EntryEditor = ({ entry, index, total, onMove, onRemove, onChange, onImageU
     );
 };
 
-// --- [保留] 量測頁面組件 ---
 const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     const isFull = mode === 'full';
     const [tableData, setTableData] = useState([]);
@@ -110,13 +109,13 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     const widthInputRef = useRef();
     const pdfRef = useRef();
 
-    // --- [保留邏輯] 粉刷+2, 磁磚+0, 單邊+1 ---
+    // --- [修改重點] 依照新要求更新計算邏輯：兩側粉刷扣2倍，單邊扣1倍 ---
     const calcFinal = (base, mode) => {
         const val = parseFloat(base) || 0;
         const thick = parseFloat(form.thickness) || 0;
-        if (mode === '兩側粉刷') return val + (thick * 2);
-        if (mode === '單邊磁磚') return val + thick;
-        return val;
+        if (mode === '兩側粉刷') return val - (thick * 2); // 量測數值 - (厚度x2)
+        if (mode === '單邊磁磚') return val - thick;      // 量測數值 - (厚度x1)
+        return val; // 兩側磁磚：不加減
     };
 
     const addRow = () => {
@@ -156,17 +155,18 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     const TripleToggle = ({ current, setter, colorClass }) => (
         <div className="flex flex-col gap-2 w-full">
             {['兩側粉刷', '兩側磁磚', '單邊磁磚'].map(label => (
-                <button key={label} onClick={() => setter(label)} className={`py-3 px-2 rounded-xl text-sm font-black border-2 transition-all ${current === label ? `${colorClass} text-white border-transparent ring-2` : 'bg-white text-gray-500 border-gray-200'}`}>{label}</button>
+                <button key={label} onClick={() => setter(label)} className={`py-3.5 px-2 rounded-xl text-base font-black border-2 transition-all active:scale-95 shadow-sm ${current === label ? `${colorClass} text-white border-transparent ring-2 ring-offset-1` : 'bg-white text-gray-500 border-gray-200'}`}>{label}</button>
             ))}
         </div>
     );
 
     return (
-        <div className="w-full md:max-w-6xl mx-auto p-2 md:p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans">
+        <div className="w-full md:max-w-6xl mx-auto p-2 md:p-4 bg-white rounded-xl shadow-lg min-h-[80vh] font-sans animate-in fade-in">
             <div className="mb-4">
                 <input type="text" value={dimTitle} onChange={(e) => setDimTitle(e.target.value)} className="w-full text-xl font-bold text-blue-800 border-2 border-blue-600 rounded px-3 py-2 outline-none shadow-sm" />
             </div>
-            <div className="flex flex-wrap gap-2 items-center justify-end mb-6 border-b pb-4">
+            {/* [保留] 位於標題下方的按鈕群組 */}
+            <div className="flex flex-wrap gap-2 md:gap-4 items-center justify-end mb-6 border-b pb-4">
                 <button onClick={clearTable} className="text-sm text-red-500 font-bold border border-red-500 px-3 py-1.5 rounded hover:bg-red-50 transition-colors flex-grow md:flex-grow-0 text-center">重置表格</button>
                 <button onClick={generatePDF} disabled={isGenerating} className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-md flex-grow md:flex-grow-0 text-center">{isGenerating ? '生成中...' : '生成 PDF'}</button>
                 <button onClick={exportExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs shadow-md flex-grow md:flex-grow-0 text-center">生成 Excel</button>
@@ -182,52 +182,69 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
                             <th className="py-2 bg-blue-50 text-blue-800 font-bold">寬</th><th className="w-10"></th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-black font-bold text-gray-800">
+                    <tbody className="divide-y divide-black font-bold text-gray-800 text-base text-center">
                         {tableData.map((r, i) => (
-                            <tr key={r.id} className="divide-x divide-black">
-                                <td>{i + 1}</td><td>{r.direction}</td><td>{r.floor}</td><td className="text-[10px] text-gray-500 font-normal">{r.type}</td>
+                            <tr key={r.id} className="divide-x divide-black transition-colors hover:bg-gray-50">
+                                <td>{i + 1}</td><td>{r.direction}</td><td>{r.floor}</td><td className="text-[10px] text-gray-500 font-normal leading-tight">{r.type}</td>
                                 {isFull && <td>{r.measureL}</td>}<td>{r.measureW}</td>
-                                {isFull && <td className="bg-blue-50/30 text-blue-600 font-bold">{r.finalL}</td>}
-                                <td className="bg-blue-50/30 text-blue-600 font-bold">{r.finalW}</td>
+                                {isFull && <td className="bg-blue-50/30 text-blue-600 font-black">{r.finalL}</td>}
+                                <td className="bg-blue-50/30 text-blue-600 font-black">{r.finalW}</td>
                                 <td><button onClick={()=>setTableData(tableData.filter(x=>x.id!==r.id))} className="text-red-500 font-bold px-1">×</button></td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 bg-gray-50 p-4 rounded-3xl border">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 bg-gray-50 p-4 md:p-6 rounded-3xl border shadow-inner">
                 <div className="flex flex-col items-center justify-center space-y-6 lg:border-r lg:pr-6">
                     <div className="grid grid-cols-3 gap-3">
                         {['北', '西', '東', '南'].map((d) => (
                             <div key={d} className={`${d==='北'?'col-start-2':d==='西'?'col-start-1 row-start-2':d==='東'?'col-start-3 row-start-2':'col-start-2 row-start-3'}`}>
-                                <button onClick={()=>setForm({...form, direction:d})} className={`w-14 h-14 rounded-full border-4 font-black transition-all ${form.direction===d?'bg-blue-600 text-white border-blue-800 shadow-lg':'bg-white text-gray-300 border-gray-200'}`}>{d}</button>
+                                <button onClick={()=>setForm({...form, direction:d})} className={`w-14 h-14 rounded-full border-4 font-black transition-all active:scale-90 ${form.direction===d?'bg-blue-600 text-white border-blue-800 shadow-lg':'bg-white text-gray-300 border-gray-200'}`}>{d}</button>
                             </div>
                         ))}
                         <div className="col-start-2 row-start-2 flex items-center justify-center"><div className="w-3 h-3 bg-black rounded-full shadow-sm"></div></div>
                     </div>
-                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border-2 border-gray-200 shadow-sm"><span className="text-xs font-bold text-gray-500">磁磚厚度:</span><input type="text" value={form.thickness} onChange={e=>setForm({...form, thickness:e.target.value})} className="w-12 text-center font-bold text-blue-600 text-lg outline-none" /></div>
+                    <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border-2 border-gray-200 shadow-sm"><span className="text-xs font-black text-gray-500">磁磚厚度:</span><input type="text" value={form.thickness} onChange={e=>setForm({...form, thickness:e.target.value})} className="w-12 text-center font-black text-blue-600 text-lg outline-none" /></div>
                 </div>
                 <div className="flex flex-col items-center justify-center space-y-4 lg:border-r lg:pr-6">
                     <div className={`grid ${isFull ? 'grid-cols-2' : 'grid-cols-1'} gap-4 w-full h-full items-center`}>
-                        {isFull && (<div className="space-y-2 flex flex-col items-center"><span className="text-xs font-bold text-blue-600 underline">量測長度設定</span><TripleToggle current={lMode} setter={setLMode} colorClass="bg-blue-600" /></div>)}
-                        <div className="space-y-2 flex flex-col items-center"><span className="text-xs font-bold text-green-600 underline">量測寬度設定</span><TripleToggle current={wMode} setter={setWMode} colorClass="bg-green-600" /></div>
+                        {isFull && (<div className="space-y-2 flex flex-col items-center"><span className="text-xs font-black text-blue-600 underline">量測長度設定</span><TripleToggle current={lMode} setter={setLMode} colorClass="bg-blue-600 shadow-blue-200" /></div>)}
+                        <div className="space-y-2 flex flex-col items-center"><span className="text-xs font-black text-green-600 underline">量測寬度設定</span><TripleToggle current={wMode} setter={setWMode} colorClass="bg-green-600 shadow-green-200" /></div>
                     </div>
                 </div>
                 <div className="space-y-4 flex flex-col justify-center">
-                    <select value={form.floor} onChange={e=>setForm({...form, floor:e.target.value})} className="w-full border-2 border-gray-300 rounded-2xl p-4 font-bold bg-white text-lg outline-none font-sans">{FLOOR_OPTIONS.map(f=><option key={f} value={f}>{f}</option>)}</select>
+                    <select value={form.floor} onChange={e=>setForm({...form, floor:e.target.value})} className="w-full border-2 border-gray-300 rounded-2xl p-4 font-black bg-white focus:border-blue-500 shadow-sm text-lg outline-none font-sans font-bold">{FLOOR_OPTIONS.map(f=><option key={f} value={f}>{f}</option>)}</select>
                     <div className="space-y-3">
-                        {isFull && (<input ref={lengthInputRef} type="number" placeholder="量測-長 (mm)" value={form.length} onChange={e=>setForm({...form, length:e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') widthInputRef.current?.focus(); }} className="w-full border-2 border-gray-300 rounded-2xl p-4 text-center text-2xl font-bold outline-none" />)}
-                        <input ref={widthInputRef} type="number" placeholder="量測-寬 (mm)" value={form.width} onChange={e=>setForm({...form, width:e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') addRow(); }} className="w-full border-2 border-gray-300 rounded-2xl p-4 text-center text-2xl font-bold outline-none" />
+                        {isFull && (<input ref={lengthInputRef} type="number" placeholder="量測-長 (mm)" value={form.length} onChange={e=>setForm({...form, length:e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') widthInputRef.current?.focus(); }} className="w-full border-2 border-gray-300 rounded-2xl p-4 text-center text-2xl font-bold focus:border-blue-500 outline-none" />)}
+                        <input ref={widthInputRef} type="number" placeholder="量測-寬 (mm)" value={form.width} onChange={e=>setForm({...form, width:e.target.value})} onKeyDown={(e) => { if(e.key === 'Enter') addRow(); }} className="w-full border-2 border-gray-300 rounded-2xl p-4 text-center text-2xl font-bold focus:border-blue-500 outline-none" />
                     </div>
-                    <button onClick={addRow} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-2xl shadow-xl active:scale-95 transition-all">登入下一筆</button>
+                    <button onClick={addRow} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-2xl hover:bg-blue-700 shadow-xl active:scale-95 transition-all">登入下一筆</button>
                 </div>
             </div>
-            {/* 隱藏 PDF 區域 (省略細節以減少 Token) */}
+            {/* PDF 隱藏區域 */}
             <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
                 <div ref={pdfRef} style={{ padding: '20mm', backgroundColor: 'white', color: 'black', width: isFull ? '277mm' : '210mm', minHeight: '297mm' }}>
-                    <h1 style={{ textAlign: 'center', fontSize: '26pt', marginBottom: '30px', fontWeight: 'bold' }}>{dimTitle}表</h1>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black' }}>
-                        {/* 表格標題與內容 */}
+                    <h1 style={{ textAlign: 'center', fontSize: '26pt', marginBottom: '30px', fontWeight: 'bold' }}>{dimTitle}表 (單位: mm)</h1>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', tableLayout: 'fixed' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f0f0f0' }}>
+                                <th style={{ border: '2px solid black', padding: '10px' }}>#</th><th style={{ border: '2px solid black', padding: '10px' }}>方位</th><th style={{ border: '2px solid black', padding: '10px' }}>樓層</th><th style={{ border: '2px solid black', padding: '10px' }}>狀態</th>
+                                {isFull && <th style={{ border: '2px solid black', padding: '10px' }}>量測-長</th>}<th style={{ border: '2px solid black', padding: '10px' }}>量測-寬</th>
+                                {isFull && <th style={{ border: '2px solid black', padding: '10px' }}>最終長</th>}<th style={{ border: '2px solid black', padding: '10px' }}>最終寬</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tableData.map((r, i) => (
+                                <tr key={r.id}>
+                                    <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{i + 1}</td><td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{r.direction}</td><td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{r.floor}</td><td style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontSize: '10px' }}>{r.type}</td>
+                                    {isFull && <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{r.measureL}</td>}
+                                    <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center' }}>{r.measureW}</td>
+                                    {isFull && <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>{r.finalL}</td>}
+                                    <td style={{ border: '1px solid black', padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>{r.finalW}</td>
+                                </tr>
+                            ))}
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -235,22 +252,23 @@ const MeasurementRecorder = ({ defaultTitle, mode = 'full' }) => {
     );
 };
 
+// --- [保留] PDF 報表組件 ---
 const PreviewPage = ({ pageItems, pageIndex, totalPages, reportTitle }) => (
-    <div className="page-container font-kai bg-white p-[15mm] overflow-hidden" style={{ width: '210mm', height: '297mm', margin: 0 }}>
+    <div className="page-container origin-top font-kai bg-white p-[15mm] overflow-hidden" style={{ width: '210mm', height: '297mm', margin: 0 }}>
         <div className="absolute top-6 right-8 text-sm font-kai text-gray-600">第 {pageIndex + 1} / {totalPages} 頁</div>
-        {pageIndex === 0 && <div className="text-center mb-6"><h1 className="text-[24pt] font-bold border-b-2 border-black pb-2 inline-block">{reportTitle}</h1></div>}
-        <table className="w-full border-collapse border border-black table-fixed">
+        {pageIndex === 0 && <div className="text-center mb-6"><h1 className="text-[24pt] font-bold text-black tracking-widest font-kai border-b-2 border-black pb-2 inline-block">{reportTitle}</h1></div>}
+        <table className="w-full border-collapse border border-black table-fixed font-kai">
             <thead><tr className="bg-[#dce6f1] text-center"><th className="border border-black py-2 w-[35%] font-kai text-lg">說 明</th><th className="border border-black py-2 w-[65%] font-kai text-lg">現 況 照 片</th></tr></thead>
             <tbody>
                 {pageItems.map((entry) => (
                     <tr key={entry.id} style={{ height: '80mm' }}>
-                        <td className="border border-black p-4 align-top text-left text-base font-kai">
+                        <td className="border border-black p-4 align-top text-left text-base font-kai leading-relaxed">
                             <div className="mb-2"><b>日期:</b> {entry.date}</div>
                             <div className="mb-2 flex gap-4"><span><b>樓層:</b> {entry.floor}</span><span><b>方位:</b> {entry.direction}</span></div>
                             <div className="mb-2"><b>項目:</b> {entry.item}</div>
                             <div className="whitespace-pre-wrap"><b>查驗內容:</b> {entry.content}</div>
                         </td>
-                        <td className="border border-black p-1 align-middle text-center">
+                        <td className="border border-black p-1 align-middle text-center bg-white">
                             <div className="w-full h-full flex gap-1 items-center justify-center" style={{ height: '78mm' }}>
                                 {entry.images?.slice(0, 2).map((img, i) => <img key={i} src={img.preview} className="w-1/2 h-full object-contain" />)}
                             </div>
@@ -280,9 +298,7 @@ export default function App() {
         try {
             localStorage.setItem('site_report_data', JSON.stringify(entries));
             localStorage.setItem('site_report_title', reportTitle);
-        } catch (e) {
-            console.warn("暫存空間已滿，請刪除部分照片。");
-        }
+        } catch (e) { console.warn("暫存已滿"); }
     }, [entries, reportTitle]);
 
     const handleImageUpload = async (id, e) => {
@@ -293,13 +309,9 @@ export default function App() {
             const currentEntry = entries.find(ent => ent.id === id);
             const remainingSlots = 2 - (currentEntry?.images?.length || 0);
             if (remainingSlots <= 0) return;
-
             const processed = [];
             for(let file of files.slice(0, remainingSlots)) {
-                try {
-                    const preview = await compressImage(file);
-                    processed.push({ preview });
-                } catch (err) { console.error(err); }
+                try { const preview = await compressImage(file); processed.push({ preview }); } catch (err) { console.error(err); }
             }
             if (processed.length > 0) {
                 setEntries(prev => prev.map(ent => ent.id === id ? { ...ent, images: [...ent.images, ...processed].slice(0, 2) } : ent));
@@ -329,17 +341,17 @@ export default function App() {
                     <h1 className="text-2xl font-bold flex items-center gap-2">🏗️ PRO事一堆</h1>
                     <div className="flex items-center gap-4">
                         <div className="flex bg-gray-200 p-1 rounded-lg shadow-inner">
-                            <button onClick={()=>setView('photo')} className={`px-4 py-1 text-xs rounded-md ${view==='photo'?'bg-white shadow text-blue-600 font-bold':'text-gray-500'}`}>照片黏貼</button>
-                            <button onClick={()=>setView('dimension')} className={`px-4 py-1 text-xs rounded-md ${view==='dimension'?'bg-white shadow text-blue-600 font-bold':'text-gray-500'}`}>四周量測</button>
-                            <button onClick={()=>setView('twoSide')} className={`px-4 py-1 text-xs rounded-md ${view==='twoSide'?'bg-white shadow text-blue-600 font-bold':'text-gray-500'}`}>兩側量測</button>
+                            <button onClick={()=>setView('photo')} className={`px-4 py-1 text-xs rounded-md transition-all ${view==='photo'?'bg-white shadow text-blue-600 font-bold':'text-gray-500 hover:text-gray-700'}`}>照片黏貼</button>
+                            <button onClick={()=>setView('dimension')} className={`px-4 py-1 text-xs rounded-md transition-all ${view==='dimension'?'bg-white shadow text-blue-600 font-bold':'text-gray-500 hover:text-gray-700'}`}>四周量測</button>
+                            <button onClick={()=>setView('twoSide')} className={`px-4 py-1 text-xs rounded-md transition-all ${view==='twoSide'?'bg-white shadow text-blue-600 font-bold':'text-gray-500 hover:text-gray-700'}`}>兩側量測</button>
                         </div>
-                        {view === 'photo' && <div className="flex items-center gap-2 border-b border-gray-400 pb-0.5"><label className="text-xs font-bold text-gray-500">標題:</label><input type="text" value={reportTitle} onChange={e=>setReportTitle(e.target.value)} className="bg-transparent font-bold outline-none w-32" /></div>}
+                        {view === 'photo' && <div className="flex items-center gap-2 border-b border-gray-400 pb-0.5 font-bold font-sans italic"><label className="text-xs text-gray-500">標題:</label><input type="text" value={reportTitle} onChange={e=>setReportTitle(e.target.value)} className="bg-transparent outline-none w-32" /></div>}
                     </div>
                 </div>
                 {view === 'photo' && (
                     <div className="flex gap-2">
-                        <button onClick={() => {if(confirm("確定重置？")) { localStorage.clear(); window.location.reload(); }}} className="text-xs text-red-400 px-2">重置</button>
-                        <button onClick={() => setEntries([...entries, {id: Date.now(), date: getROCDate(), floor:'', direction:'', item:'', content:'', images:[] }])} className="px-4 py-2 bg-white border rounded-lg text-xs font-bold shadow">+ 新增</button>
+                        <button onClick={() => {if(confirm("確定重置？")) { localStorage.clear(); window.location.reload(); }}} className="text-xs text-red-400 px-2 font-bold font-sans">重置</button>
+                        <button onClick={() => setEntries([...entries, {id: Date.now(), date: getROCDate(), floor:'', direction:'', item:'', content:'', images:[] }])} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-xs font-bold shadow">+ 新增單筆</button>
                         <button onClick={generatePDF} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold shadow">下載 PDF</button>
                     </div>
                 )}
@@ -350,7 +362,7 @@ export default function App() {
                     {entries.map((entry, idx) => (
                         <EntryEditor key={entry.id} entry={entry} index={idx} total={entries.length} onMove={(i,d)=>{const n=[...entries]; const t=d==='up'?i-1:i+1; [n[i],n[t]]=[n[t],n[i]]; setEntries(n);}} onRemove={id=>setEntries(entries.filter(e=>e.id!==id))} onChange={(id,f,v)=>setEntries(entries.map(e=>e.id===id?{...e,[f]:v}:e))} onImageUpload={handleImageUpload} onRemoveImage={(id,idx)=>setEntries(entries.map(e=>e.id===id?{...e,images:e.images.filter((_,i)=>i!==idx)}:e))} />
                     ))}
-                    <button onClick={() => setEntries([...entries, {id: Date.now(), date: getROCDate(), floor:'', direction:'', item:'', content:'', images:[] }])} className="w-full py-5 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-bold bg-white">+ 新增照片項目</button>
+                    <button onClick={() => setEntries([...entries, {id: Date.now(), date: getROCDate(), floor:'', direction:'', item:'', content:'', images:[] }])} className="w-full py-5 border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 font-bold bg-white font-sans text-lg">+ 新增照片項目</button>
                     <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
                         <div ref={reportRef} style={{ margin: 0, padding: 0 }}>
                             {chunkedEntries.map((items, i) => <PreviewPage key={i} pageItems={items} pageIndex={i} totalPages={chunkedEntries.length} reportTitle={reportTitle} />)}
@@ -363,7 +375,7 @@ export default function App() {
                 <MeasurementRecorder key="twoSide" defaultTitle="兩側量測尺寸" mode="widthOnly" />
             )}
             
-            {(isProcessing || isGenerating) && <div className="fixed inset-0 bg-black/60 z-50 flex flex-col items-center justify-center font-bold text-white backdrop-blur-sm"><Icons.Loader />處理中，請稍候...</div>}
+            {(isProcessing || isGenerating) && <div className="fixed inset-0 bg-black/60 z-50 flex flex-col items-center justify-center font-bold text-white backdrop-blur-sm shadow-2xl font-sans"><Icons.Loader />處理中，請稍候...</div>}
         </div>
     );
 }
